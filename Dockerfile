@@ -6,6 +6,9 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     && docker-php-ext-install pdo pdo_pgsql \
+    && a2dismod mpm_event || true \
+    && a2dismod mpm_worker || true \
+    && a2enmod mpm_prefork \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
