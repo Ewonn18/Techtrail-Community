@@ -1,0 +1,8 @@
+.git
+.gitignore
+.env
+node_modules
+vendor
+.DS_Store
+Thumbs.db
+public/test-db.php
