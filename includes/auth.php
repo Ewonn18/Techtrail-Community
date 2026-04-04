@@ -97,6 +97,38 @@ function validate_password_policy(string $password): array
 }
 
 /**
+ * Convert Supabase errors into user-friendly messages.
+ */
+function auth_humanize_supabase_error(Throwable $e): string
+{
+    $message = strtolower(trim($e->getMessage()));
+
+    if (str_contains($message, 'email rate limit exceeded')) {
+        return 'Too many signup attempts were made recently. Please wait a few minutes before trying again.';
+    }
+
+    if (str_contains($message, 'user already registered')) {
+        return 'This email is already registered.';
+    }
+
+    if (str_contains($message, 'signup is disabled')) {
+        return 'New account registration is currently unavailable.';
+    }
+
+    if (str_contains($message, 'invalid email')) {
+        return 'Please enter a valid email address.';
+    }
+
+    if (str_contains($message, 'password')) {
+        return 'The password was rejected by the authentication provider.';
+    }
+
+    return APP_DEBUG
+        ? 'Could not create the account right now: ' . $e->getMessage()
+        : 'Could not create the account right now. Please try again later.';
+}
+
+/**
  * Process login POST.
  *
  * @return array{success: bool, errors: string[], identifier: string}
@@ -158,7 +190,7 @@ function register_user(string $username, string $email, string $password): array
     $errors = [];
 
     $username = trim($username);
-    $email    = trim($email);
+    $email = trim($email);
     $emailLower = strtolower($email);
 
     if ($username === '' || strlen($username) < 3 || strlen($username) > 32) {
@@ -232,7 +264,7 @@ function register_user(string $username, string $email, string $password): array
                 ]);
             }
         } catch (Throwable $e) {
-            throw new RuntimeException('Supabase signup failed: ' . $e->getMessage(), 0, $e);
+            throw new RuntimeException(auth_humanize_supabase_error($e), 0, $e);
         }
 
         $pdo->commit();
@@ -243,7 +275,7 @@ function register_user(string $username, string $email, string $password): array
         }
 
         if (APP_DEBUG) {
-            return ['success' => false, 'errors' => ['Registration failed: ' . $e->getMessage()]];
+            return ['success' => false, 'errors' => [$e->getMessage()]];
         }
 
         return ['success' => false, 'errors' => ['Registration failed. Please try again.']];
@@ -342,17 +374,14 @@ function login_user(string $identifier, string $password): array
         return ['success' => false, 'errors' => ['Invalid credentials. Please try again.']];
     }
 
-    // Try Supabase Auth first if account is linked
     if (!empty($user['supabase_auth_id'])) {
         try {
             supabase_auth_signin((string) $user['email'], $password);
             return login_finalize_user($user, $password);
         } catch (Throwable $e) {
-            // Fallback to local password check during migration
             return login_user_local($user, $password);
         }
     }
 
-    // Old local-only account
     return login_user_local($user, $password);
 }
