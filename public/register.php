@@ -64,7 +64,7 @@ require_once __DIR__ . '/../partials/app-shell-start.php';
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="<?= e(url('/register.php')) ?>" class="space-y-5" novalidate data-tt-form-submit>
+            <form method="POST" action="<?= e(url('/register.php')) ?>" class="space-y-5" novalidate data-tt-form-submit id="tt-register-form">
                 <?= csrf_field() ?>
 
                 <div>
@@ -175,14 +175,19 @@ require_once __DIR__ . '/../partials/app-shell-start.php';
                     </div>
                 </div>
 
-                <button
-                    type="submit"
-                    data-tt-submit-btn
-                    data-tt-loading-text="Creating account..."
-                    class="w-full rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-500 to-cyan-400 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(6,182,212,0.28)] transition duration-300 hover:scale-[1.015] hover:shadow-[0_18px_38px_rgba(6,182,212,0.34)] active:scale-[0.99]"
-                >
-                    Create account
-                </button>
+                <div class="space-y-2">
+                    <button
+                        type="submit"
+                        id="tt-register-submit"
+                        data-tt-submit-btn
+                        data-tt-loading-text="Creating account..."
+                        class="w-full rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-500 to-cyan-400 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(6,182,212,0.28)] transition duration-300 hover:scale-[1.015] hover:shadow-[0_18px_38px_rgba(6,182,212,0.34)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+                    >
+                        Create account
+                    </button>
+
+                    <p id="tt-register-cooldown-text" class="hidden text-center text-xs text-amber-300/90"></p>
+                </div>
             </form>
 
             <div class="mt-8 border-t border-white/10 pt-6 text-center">
@@ -221,6 +226,91 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    var form = document.getElementById('tt-register-form');
+    var submitBtn = document.getElementById('tt-register-submit');
+    var cooldownText = document.getElementById('tt-register-cooldown-text');
+    var storageKey = 'tt_register_cooldown_until';
+    var cooldownSeconds = 60;
+    var timerId = null;
+
+    function setButtonState(disabled, label) {
+        if (!submitBtn) return;
+        submitBtn.disabled = disabled;
+        if (label) {
+            submitBtn.textContent = label;
+        }
+    }
+
+    function clearCooldown() {
+        sessionStorage.removeItem(storageKey);
+        if (timerId) {
+            clearInterval(timerId);
+            timerId = null;
+        }
+        setButtonState(false, 'Create account');
+        if (cooldownText) {
+            cooldownText.textContent = '';
+            cooldownText.classList.add('hidden');
+        }
+    }
+
+    function startCooldown(untilTs) {
+        if (!submitBtn) return;
+
+        if (timerId) {
+            clearInterval(timerId);
+            timerId = null;
+        }
+
+        function updateCooldown() {
+            var now = Date.now();
+            var remainingMs = untilTs - now;
+            var remaining = Math.ceil(remainingMs / 1000);
+
+            if (remaining <= 0) {
+                clearCooldown();
+                return;
+            }
+
+            setButtonState(true, 'Please wait (' + remaining + 's)');
+            if (cooldownText) {
+                cooldownText.textContent = 'You can try registering again in ' + remaining + ' second' + (remaining === 1 ? '' : 's') + '.';
+                cooldownText.classList.remove('hidden');
+            }
+        }
+
+        updateCooldown();
+        timerId = setInterval(updateCooldown, 1000);
+    }
+
+    function restoreCooldownIfAny() {
+        var saved = sessionStorage.getItem(storageKey);
+        if (!saved) return;
+
+        var untilTs = parseInt(saved, 10);
+        if (!Number.isFinite(untilTs)) {
+            sessionStorage.removeItem(storageKey);
+            return;
+        }
+
+        if (untilTs <= Date.now()) {
+            sessionStorage.removeItem(storageKey);
+            return;
+        }
+
+        startCooldown(untilTs);
+    }
+
+    restoreCooldownIfAny();
+
+    if (form && submitBtn) {
+        form.addEventListener('submit', function () {
+            var untilTs = Date.now() + (cooldownSeconds * 1000);
+            sessionStorage.setItem(storageKey, String(untilTs));
+            startCooldown(untilTs);
+        });
+    }
 });
 </script>
 
