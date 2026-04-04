@@ -104,7 +104,7 @@ function auth_humanize_supabase_error(Throwable $e): string
     $message = strtolower(trim($e->getMessage()));
 
     if (str_contains($message, 'email rate limit exceeded')) {
-        return 'TEST MARKER: Too many signup attempts were made recently. Please wait 5 minutes before trying again.';
+        return 'Too many signup attempts were made recently. Please wait a few minutes before trying again.';
     }
 
     if (str_contains($message, 'user already registered')) {
