@@ -23,6 +23,12 @@ if ($followingId < 1 || $followerId === $followingId) {
     redirect('/index.php');
 }
 
-unfollow_user($followerId, $followingId);
-flash_set('success', 'You unfollowed this user.');
+$unfollowed = unfollow_user($followerId, $followingId);
+
+if ($unfollowed) {
+    flash_set('success', 'You unfollowed this user.');
+} else {
+    flash_set('error', 'Could not complete unfollow action.');
+}
+
 redirect('/profile.php?id=' . $followingId);

@@ -259,7 +259,7 @@ $searchActive = ($searchQuery !== '' || $filterType !== 'all');
         <?php if ($editing !== null): ?>
             <div class="mb-10 rounded-3xl border border-cyan-500/30 bg-white/[0.04] p-6 shadow-xl backdrop-blur-xl sm:p-8">
                 <h2 class="text-lg font-bold text-white">Edit post</h2>
-                <form method="POST" action="<?= e($communityBaseUrl) ?>" class="mt-8 space-y-6" novalidate>
+                <form method="POST" action="<?= e($communityBaseUrl) ?>" class="mt-8 space-y-6" novalidate data-tt-form-submit>
                     <?= csrf_field() ?>
                     <input type="hidden" name="community_action" value="update">
                     <input type="hidden" name="post_id" value="<?= (int) $editing['id'] ?>">
@@ -316,7 +316,7 @@ $searchActive = ($searchQuery !== '' || $filterType !== 'all');
                     </div>
 
                     <div class="flex flex-wrap gap-3 pt-2">
-                        <button type="submit" class="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 hover:scale-[1.02] hover:shadow-cyan-400/35">
+                        <button type="submit" data-tt-submit-btn data-tt-loading-text="Saving..." class="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 hover:scale-[1.02] hover:shadow-cyan-400/35">
                             Save changes
                         </button>
                         <a href="<?= e($communityBaseUrl . ($persistQueryString !== '' ? '?' . $persistQueryString : '')) ?>" class="inline-flex items-center rounded-2xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-gray-200 transition-all duration-200 hover:scale-[1.01] hover:border-white/25 hover:bg-white/10">
@@ -383,7 +383,7 @@ $searchActive = ($searchQuery !== '' || $filterType !== 'all');
                         ></textarea>
                     </div>
 
-                    <button type="submit" data-tt-submit-btn class="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 hover:scale-[1.02] hover:shadow-cyan-400/35 disabled:cursor-wait disabled:opacity-70">
+                    <button type="submit" data-tt-submit-btn data-tt-loading-text="Publishing..." class="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/25 transition-all duration-200 hover:scale-[1.02] hover:shadow-cyan-400/35 disabled:cursor-wait disabled:opacity-70">
                         Publish
                     </button>
                 </form>
@@ -451,11 +451,11 @@ $searchActive = ($searchQuery !== '' || $filterType !== 'all');
                         <?php if ($isOwner): ?>
                             <div class="flex flex-wrap gap-2">
                                 <a href="<?= e($communityBaseUrl . '?' . http_build_query(array_merge($persistParams, ['edit' => $pid]))) ?>" class="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-gray-300 transition-all duration-200 hover:scale-105 hover:border-cyan-500/40 hover:bg-white/10">Edit</a>
-                                <form method="POST" action="<?= e($communityBaseUrl . ($persistQueryString !== '' ? '?' . $persistQueryString : '')) ?>" class="inline" onsubmit="return confirm('Delete this post?');">
+                                <form method="POST" action="<?= e($communityBaseUrl . ($persistQueryString !== '' ? '?' . $persistQueryString : '')) ?>" class="inline" onsubmit="return confirm('Delete this post?');" data-tt-form-submit>
                                     <?= csrf_field() ?>
                                     <input type="hidden" name="community_action" value="delete">
                                     <input type="hidden" name="post_id" value="<?= $pid ?>">
-                                    <button type="submit" class="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-300 transition-all duration-200 hover:scale-105 hover:bg-red-500/15">Delete</button>
+                                    <button type="submit" data-tt-submit-btn data-tt-loading-text="Deleting..." class="rounded-lg border border-red-500/40 px-3 py-1.5 text-xs font-semibold text-red-300 transition-all duration-200 hover:scale-105 hover:bg-red-500/15">Delete</button>
                                 </form>
                             </div>
                         <?php endif; ?>
@@ -471,6 +471,7 @@ $searchActive = ($searchQuery !== '' || $filterType !== 'all');
                             <button
                                 type="submit"
                                 data-tt-submit-btn
+                                data-tt-loading-text="Updating..."
                                 class="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition-all duration-200 hover:scale-[1.03] disabled:opacity-60 <?= $liked ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-200' : 'border-white/15 bg-white/5 text-gray-300 hover:border-white/25 hover:bg-white/10' ?>"
                             >
                                 <span><?= $liked ? '♥' : '♡' ?></span>
@@ -519,7 +520,7 @@ $searchActive = ($searchQuery !== '' || $filterType !== 'all');
                                 class="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none transition-all duration-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/40 invalid:border-red-500/40"
                                 placeholder="Write a comment…"
                             >
-                            <button type="submit" data-tt-submit-btn class="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:scale-[1.02] disabled:opacity-60">
+                            <button type="submit" data-tt-submit-btn data-tt-loading-text="Posting..." class="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 transition-all duration-200 hover:scale-[1.02] disabled:opacity-60">
                                 Comment
                             </button>
                         </form>
@@ -568,20 +569,6 @@ $searchActive = ($searchQuery !== '' || $filterType !== 'all');
             main.classList.remove('opacity-0');
             main.classList.add('opacity-100');
         }
-    });
-
-    document.querySelectorAll('form[data-tt-form-submit]').forEach(function (form) {
-        form.addEventListener('submit', function () {
-            var btn = form.querySelector('[data-tt-submit-btn]');
-            if (btn && !btn.disabled) {
-                btn.disabled = true;
-                var t = (btn.textContent || '').trim();
-                if (t) {
-                    btn.dataset.ttWas = t;
-                }
-                btn.textContent = 'Please wait…';
-            }
-        });
     });
 })();
 </script>

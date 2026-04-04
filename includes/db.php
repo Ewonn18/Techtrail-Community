@@ -29,10 +29,16 @@ class Database
      */
     private static function connect(): PDO
     {
+        if (trim(DB_HOST) === '') {
+            throw new RuntimeException('Database host is not configured.');
+        }
+
+        if (trim(DB_USER) === '') {
+            throw new RuntimeException('Database user is not configured.');
+        }
+
         if (DB_PASS === '') {
-            throw new RuntimeException(
-                'Database password is not configured. Set DB_PASS in your .env file.'
-            );
+            throw new RuntimeException('Database password is not configured.');
         }
 
         $dsn = sprintf(
@@ -60,12 +66,14 @@ class Database
 
             return $pdo;
         } catch (PDOException $e) {
+            self::logConnectionFailure($e);
+
             $message = $e->getMessage();
 
             if (APP_DEBUG) {
                 if (stripos($message, 'password authentication failed') !== false) {
                     throw new RuntimeException(
-                        'Database connection failed: PostgreSQL rejected the username/password. Check DB_USER and DB_PASS in your .env file.',
+                        'Database connection failed: PostgreSQL rejected the username/password. Check DB_USER and DB_PASS.',
                         (int) $e->getCode(),
                         $e
                     );
@@ -96,6 +104,8 @@ class Database
 
             throw new RuntimeException('A database error occurred. Please try again later.');
         } catch (Throwable $e) {
+            self::logThrowable($e);
+
             if (APP_DEBUG) {
                 throw new RuntimeException(
                     'Database connection failed: ' . $e->getMessage(),
@@ -108,12 +118,49 @@ class Database
         }
     }
 
+    private static function logConnectionFailure(PDOException $e): void
+    {
+        $safeDsn = sprintf(
+            'pgsql:host=%s;port=%s;dbname=%s;sslmode=%s',
+            DB_HOST,
+            DB_PORT,
+            DB_NAME,
+            DB_SSLMODE
+        );
+
+        error_log(
+            '[TechTrail DB] PDO connection failed | env=' . APP_ENV .
+            ' | host=' . DB_HOST .
+            ' | port=' . DB_PORT .
+            ' | db=' . DB_NAME .
+            ' | schema=' . DB_SCHEMA .
+            ' | dsn=' . $safeDsn .
+            ' | message=' . $e->getMessage()
+        );
+    }
+
+    private static function logThrowable(Throwable $e): void
+    {
+        error_log(
+            '[TechTrail DB] Throwable during database bootstrap | env=' . APP_ENV .
+            ' | message=' . $e->getMessage()
+        );
+    }
+
     /**
      * Convenience wrapper — returns the PDO instance directly.
      */
     public static function pdo(): PDO
     {
         return self::getInstance();
+    }
+
+    /**
+     * Reset shared instance. Useful if you ever want to reconnect.
+     */
+    public static function reset(): void
+    {
+        self::$instance = null;
     }
 }
 

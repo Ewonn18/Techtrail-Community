@@ -64,7 +64,7 @@ require_once __DIR__ . '/../partials/app-shell-start.php';
                 </div>
             <?php endif; ?>
 
-            <form method="POST" action="<?= e(url('/register.php')) ?>" class="space-y-5" novalidate>
+            <form method="POST" action="<?= e(url('/register.php')) ?>" class="space-y-5" novalidate data-tt-form-submit>
                 <?= csrf_field() ?>
 
                 <div>
@@ -177,6 +177,8 @@ require_once __DIR__ . '/../partials/app-shell-start.php';
 
                 <button
                     type="submit"
+                    data-tt-submit-btn
+                    data-tt-loading-text="Creating account..."
                     class="w-full rounded-2xl bg-gradient-to-r from-blue-600 via-cyan-500 to-cyan-400 py-3.5 text-sm font-bold text-white shadow-[0_12px_30px_rgba(6,182,212,0.28)] transition duration-300 hover:scale-[1.015] hover:shadow-[0_18px_38px_rgba(6,182,212,0.34)] active:scale-[0.99]"
                 >
                     Create account

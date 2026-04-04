@@ -24,15 +24,20 @@ if ($followingId < 1 || $followerId === $followingId) {
     redirect('/index.php');
 }
 
-follow_user($followerId, $followingId);
+$followed = follow_user($followerId, $followingId);
 
-notification_create(
-    $followingId,
-    $followerId,
-    'new_follower',
-    $followerId,
-    'started following you.'
-);
+if ($followed) {
+    notification_create(
+        $followingId,
+        $followerId,
+        'new_follower',
+        $followerId,
+        'started following you.'
+    );
 
-flash_set('success', 'You are now following this user.');
+    flash_set('success', 'You are now following this user.');
+} else {
+    flash_set('error', 'Could not complete follow action.');
+}
+
 redirect('/profile.php?id=' . $followingId);

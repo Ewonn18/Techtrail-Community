@@ -200,9 +200,16 @@ $isAuthLayout = $layoutMode === 'auth';
             box-shadow: 0 10px 30px rgba(0,0,0,.22);
             backdrop-filter: blur(12px);
         }
+
+        .tt-top-loader {
+            transform-origin: left center;
+            transition: transform .22s ease, opacity .22s ease;
+        }
     </style>
 </head>
 <body class="site-shell min-h-screen text-gray-100 flex flex-col">
+
+<div id="tt-top-loader" class="tt-top-loader fixed left-0 top-0 z-[100] h-[3px] w-full scale-x-0 bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 opacity-0"></div>
 
 <?php if ($isAuthLayout): ?>
 <header class="sticky top-0 z-50 auth-header-shell">
@@ -252,11 +259,12 @@ $isAuthLayout = $layoutMode === 'auth';
                         <a href="<?= e(url('/profile.php?id=' . (int) $user['id'])) ?>" class="nav-pill rounded-xl px-4 py-2 transition <?= nav_is_active('profile.php') ? 'nav-pill-active' : 'text-gray-300' ?>">Profile</a>
                         <a href="<?= e(url('/notifications.php')) ?>" class="nav-pill relative rounded-xl px-4 py-2 transition <?= nav_is_active('notifications.php') ? 'nav-pill-active' : 'text-gray-300' ?>">
                             Notifications
-                            <?php if ($unreadNotifications > 0): ?>
-                                <span class="ml-2 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-cyan-400 px-1.5 py-0.5 text-[10px] font-bold text-gray-950">
-                                    <?= $unreadNotifications > 99 ? '99+' : $unreadNotifications ?>
-                                </span>
-                            <?php endif; ?>
+                            <span
+                                id="tt-notification-badge-desktop"
+                                class="ml-2 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-cyan-400 px-1.5 py-0.5 text-[10px] font-bold text-gray-950 <?= $unreadNotifications > 0 ? '' : 'hidden' ?>"
+                            >
+                                <?= $unreadNotifications > 99 ? '99+' : $unreadNotifications ?>
+                            </span>
                         </a>
                     <?php endif; ?>
                 </nav>
@@ -268,10 +276,12 @@ $isAuthLayout = $layoutMode === 'auth';
                         Hi, <strong class="text-white"><?= e($user['username']) ?></strong>
                     </span>
 
-                    <form method="POST" action="<?= e(url('/logout.php')) ?>" class="inline">
+                    <form method="POST" action="<?= e(url('/logout.php')) ?>" class="inline" data-tt-form-submit>
                         <?= csrf_field() ?>
                         <button
                             type="submit"
+                            data-tt-submit-btn
+                            data-tt-loading-text="Logging out..."
                             class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-gray-200 transition hover:bg-white/10 hover:text-white"
                         >
                             Log out
@@ -308,12 +318,21 @@ $isAuthLayout = $layoutMode === 'auth';
                     <a href="<?= e(url('/community.php')) ?>" class="rounded-xl border px-3 py-2 <?= nav_is_active('community.php') ? 'mobile-nav-link-active' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white' ?>">Community</a>
                     <a href="<?= e(url('/profile.php?id=' . (int) $user['id'])) ?>" class="rounded-xl border px-3 py-2 <?= nav_is_active('profile.php') ? 'mobile-nav-link-active' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white' ?>">Profile</a>
                     <a href="<?= e(url('/notifications.php')) ?>" class="rounded-xl border px-3 py-2 <?= nav_is_active('notifications.php') ? 'mobile-nav-link-active' : 'border-transparent text-gray-300 hover:bg-white/5 hover:text-white' ?>">
-                        Notifications<?= $unreadNotifications > 0 ? ' (' . ($unreadNotifications > 99 ? '99+' : $unreadNotifications) . ')' : '' ?>
+                        Notifications
+                        <span
+                            id="tt-notification-badge-mobile"
+                            class="<?= $unreadNotifications > 0 ? '' : 'hidden' ?>"
+                        ><?= $unreadNotifications > 0 ? ' (' . ($unreadNotifications > 99 ? '99+' : $unreadNotifications) . ')' : '' ?></span>
                     </a>
 
-                    <form method="POST" action="<?= e(url('/logout.php')) ?>" class="pt-2">
+                    <form method="POST" action="<?= e(url('/logout.php')) ?>" class="pt-2" data-tt-form-submit>
                         <?= csrf_field() ?>
-                        <button type="submit" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-left text-gray-200 hover:bg-white/10">
+                        <button
+                            type="submit"
+                            data-tt-submit-btn
+                            data-tt-loading-text="Logging out..."
+                            class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-left text-gray-200 hover:bg-white/10"
+                        >
                             Log out
                         </button>
                     </form>
@@ -360,3 +379,117 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <?php endif; ?>
+
+<script>
+(function () {
+    function startTopLoader() {
+        var loader = document.getElementById('tt-top-loader');
+        if (!loader) return;
+        loader.classList.remove('opacity-0', 'scale-x-0');
+        loader.classList.add('opacity-100');
+        loader.style.transform = 'scaleX(0.55)';
+    }
+
+    function finishTopLoader() {
+        var loader = document.getElementById('tt-top-loader');
+        if (!loader) return;
+        loader.style.transform = 'scaleX(1)';
+        setTimeout(function () {
+            loader.classList.add('opacity-0');
+            loader.style.transform = 'scaleX(0)';
+        }, 180);
+    }
+
+    document.addEventListener('DOMContentLoaded', finishTopLoader);
+    window.addEventListener('pageshow', finishTopLoader);
+
+    document.querySelectorAll('form[data-tt-form-submit]').forEach(function (form) {
+        form.addEventListener('submit', function () {
+            startTopLoader();
+
+            var btn = form.querySelector('[data-tt-submit-btn]');
+            if (btn && !btn.disabled) {
+                btn.disabled = true;
+                btn.dataset.ttOriginalText = btn.textContent || '';
+                btn.textContent = btn.getAttribute('data-tt-loading-text') || 'Please wait...';
+            }
+        });
+    });
+
+    document.querySelectorAll('a[href]').forEach(function (link) {
+        link.addEventListener('click', function (event) {
+            var href = link.getAttribute('href') || '';
+            var target = link.getAttribute('target') || '';
+            var isHashOnly = href.startsWith('#');
+            var isJs = href.startsWith('javascript:');
+            var isExternal = /^https?:\/\//i.test(href) && !href.includes(window.location.host);
+
+            if (event.defaultPrevented || target === '_blank' || isHashOnly || isJs || isExternal) {
+                return;
+            }
+
+            startTopLoader();
+        });
+    });
+
+    <?php if ($loggedIn && $user): ?>
+    (function () {
+        var desktopBadge = document.getElementById('tt-notification-badge-desktop');
+        var mobileBadge = document.getElementById('tt-notification-badge-mobile');
+
+        function renderBadgeValue(count) {
+            if (count > 99) return '99+';
+            return String(count);
+        }
+
+        function applyBadge(count) {
+            if (desktopBadge) {
+                if (count > 0) {
+                    desktopBadge.textContent = renderBadgeValue(count);
+                    desktopBadge.classList.remove('hidden');
+                } else {
+                    desktopBadge.classList.add('hidden');
+                }
+            }
+
+            if (mobileBadge) {
+                if (count > 0) {
+                    mobileBadge.textContent = ' (' + renderBadgeValue(count) + ')';
+                    mobileBadge.classList.remove('hidden');
+                } else {
+                    mobileBadge.textContent = '';
+                    mobileBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        function pollNotifications() {
+            fetch('<?= e(url('/notifications-poll.php')) ?>', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Polling failed');
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                if (data && data.success) {
+                    applyBadge(Number(data.unread_count || 0));
+                    document.dispatchEvent(new CustomEvent('tt:notifications-updated', { detail: data }));
+                }
+            })
+            .catch(function () {});
+        }
+
+        pollNotifications();
+        setInterval(pollNotifications, 20000);
+    })();
+    <?php endif; ?>
+})();
+</script>

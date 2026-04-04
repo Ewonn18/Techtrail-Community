@@ -69,7 +69,7 @@ if (!empty($user['avatar_url']) && is_string($user['avatar_url'])) {
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="<?= e(url('/edit-profile.php')) ?>" enctype="multipart/form-data" class="mt-8 space-y-7" novalidate>
+        <form method="POST" action="<?= e(url('/edit-profile.php')) ?>" enctype="multipart/form-data" class="mt-8 space-y-7" novalidate data-tt-form-submit>
             <?= csrf_field() ?>
 
             <div>
@@ -197,6 +197,8 @@ if (!empty($user['avatar_url']) && is_string($user['avatar_url'])) {
             <div class="flex flex-wrap gap-3">
                 <button
                     type="submit"
+                    data-tt-submit-btn
+                    data-tt-loading-text="Saving changes..."
                     class="rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-cyan-500/25 transition hover:scale-[1.02] hover:shadow-cyan-400/35"
                 >
                     Save changes

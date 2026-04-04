@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/helpers.php';
 
 /**
  * Create a notification for a user.
@@ -109,4 +110,77 @@ function notification_post_owner_id(int $postId): ?int
     $ownerId = $stmt->fetchColumn();
 
     return $ownerId !== false ? (int) $ownerId : null;
+}
+
+/**
+ * Badge label by notification type.
+ */
+function notification_badge_label(string $type): string
+{
+    return match($type) {
+        'post_like'    => 'Like',
+        'post_comment' => 'Comment',
+        'new_follower' => 'Follow',
+        default        => 'Update',
+    };
+}
+
+/**
+ * Badge class by notification type.
+ */
+function notification_badge_class(string $type): string
+{
+    return match($type) {
+        'post_like'    => 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+        'post_comment' => 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300',
+        'new_follower' => 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300',
+        default        => 'border-white/10 bg-white/5 text-gray-300',
+    };
+}
+
+/**
+ * Resolve target URL for a notification.
+ */
+function notification_target_url(array $notification): string
+{
+    $type = (string) ($notification['type'] ?? '');
+    $referenceId = (int) ($notification['reference_id'] ?? 0);
+
+    if ($type === 'post_like' || $type === 'post_comment') {
+        return url('/community.php#post-' . $referenceId);
+    }
+
+    if ($type === 'new_follower' && $referenceId > 0) {
+        return url('/profile.php?id=' . $referenceId);
+    }
+
+    return url('/notifications.php');
+}
+
+/**
+ * Convert DB notification row to frontend-ready payload.
+ *
+ * @param array<string, mixed> $notification
+ * @return array<string, mixed>
+ */
+function notification_to_payload(array $notification): array
+{
+    $type = (string) ($notification['type'] ?? '');
+    $actor = trim((string) ($notification['actor_username'] ?? 'Someone'));
+    $message = trim((string) ($notification['message'] ?? 'sent an update.'));
+    $createdAt = (string) ($notification['created_at'] ?? '');
+
+    return [
+        'id' => (int) ($notification['id'] ?? 0),
+        'type' => $type,
+        'badge_label' => notification_badge_label($type),
+        'badge_class' => notification_badge_class($type),
+        'actor' => $actor,
+        'message' => $message,
+        'reference_id' => (int) ($notification['reference_id'] ?? 0),
+        'is_read' => !empty($notification['is_read']),
+        'created_at' => $createdAt,
+        'created_at_human' => $createdAt !== '' ? format_date($createdAt, 'M j, Y · g:i A') : '',
+        'target_url' => notification_target_url($notification),
+    ];
 }
